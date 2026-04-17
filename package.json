@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@liveblocks/client": "^3.18.3",
+    "@liveblocks/react": "^3.18.3",
     "@tailwindcss/postcss": "^4.2.2",
     "@types/dagre": "^0.7.54",
     "@types/node": "^25.6.0",

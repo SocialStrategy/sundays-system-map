@@ -3,6 +3,7 @@ import { Share_Tech, Montserrat, Poppins, JetBrains_Mono } from 'next/font/googl
 import '../styles/globals.css';
 import '../styles/theme.css';
 import { ReactNode } from 'react';
+import Providers from './providers';
 
 const shareTech = Share_Tech({
   weight: '400',
@@ -64,7 +65,9 @@ export default function RootLayout({
             </div>
           </header>
           <main className="flex flex-1 overflow-hidden">
-            {children}
+            <Providers>
+              {children}
+            </Providers>
           </main>
           <footer className="border-t border-border-light bg-card px-6 py-3 text-center text-xs text-muted-foreground dark:border-border-dark dark:bg-card-dark">
             <span className="font-ui">Phase 1 – Basic whiteboard</span> • Data from architecture.json •{' '}

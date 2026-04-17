@@ -8,13 +8,7 @@
       "type": "entity",
       "category": "external",
       "description": "Close to 1M visits per year",
-      "metadata": {
-        "scale": "~1M visits/year"
-      },
-      "position": {
-        "x": 0,
-        "y": 0
-      }
+      "metadata": { "scale": "~1M visits/year" }
     },
     {
       "id": "studios",
@@ -22,68 +16,42 @@
       "type": "entity",
       "category": "physical",
       "description": "40 franchise locations",
-      "metadata": {
-        "count": 40
-      },
-      "position": {
-        "x": 400,
-        "y": 0
-      }
+      "metadata": { "count": 40 }
     },
     {
       "id": "client_web_app",
       "label": "Client Web App",
       "type": "software",
       "category": "client-facing",
-      "description": "Personal details, membership QR, add balance, tanning advice",
-      "position": {
-        "x": 0,
-        "y": 150
-      }
+      "description": "Personal details, membership QR, add balance, tanning advice"
     },
     {
       "id": "studio_mgmt_software",
       "label": "Studio Management Software (local)",
       "type": "software",
       "category": "on-prem",
-      "description": "Installed locally at studios; handles personal details, phone reservations, membership, add balance, tanning advice",
-      "position": {
-        "x": 400,
-        "y": 150
-      }
+      "description": "Installed locally at studios; handles personal details, phone reservations, membership, add balance, tanning advice"
     },
     {
       "id": "studio_web_app",
       "label": "Studio Web App",
       "type": "software",
       "category": "internal",
-      "description": "Provides RT bed status, revenue, staff, visits",
-      "position": {
-        "x": 400,
-        "y": 300
-      }
+      "description": "Provides RT bed status, revenue, staff, visits"
     },
     {
       "id": "extranet",
       "label": "Extranet",
       "type": "software",
       "category": "internal",
-      "description": "Messages, meetings, promos, lamp hours, visit stats, gift cards, financial stats, staff stats, design requests",
-      "position": {
-        "x": 800,
-        "y": 0
-      }
+      "description": "Messages, meetings, promos, lamp hours, visit stats, gift cards, financial stats, staff stats, design requests"
     },
     {
       "id": "cms",
       "label": "CMS",
       "type": "software",
       "category": "internal",
-      "description": "Content Management System feeding data to HQ server and website",
-      "position": {
-        "x": 800,
-        "y": 150
-      }
+      "description": "Content Management System feeding data to HQ server and website"
     },
     {
       "id": "client_data_cloud",
@@ -91,13 +59,7 @@
       "type": "data-store",
       "category": "cloud",
       "description": "Over 20 years of data on 1M clients, including all visit data",
-      "metadata": {
-        "updateFrequency": "2x/day"
-      },
-      "position": {
-        "x": 0,
-        "y": 300
-      }
+      "metadata": { "updateFrequency": "2x/day" }
     },
     {
       "id": "studio_data_hq",
@@ -105,79 +67,49 @@
       "type": "data-store",
       "category": "on-prem",
       "description": "Beds, lamp life, product/pricing tables, promos, messages, meetings",
-      "metadata": {
-        "updateFrequency": "1x/day (midnight)"
-      },
-      "position": {
-        "x": 800,
-        "y": 300
-      }
+      "metadata": { "updateFrequency": "1x/day (midnight)" }
     },
     {
       "id": "marqwise",
       "label": "Marqwise",
       "type": "service",
       "category": "external",
-      "description": "Shell around SendGrid (email) and Spryng (SMS). Tracks time path from mailing to studio. Sends 8M promo emails/year and 2M promo SMS/year",
-      "position": {
-        "x": 1200,
-        "y": 0
-      }
+      "description": "Shell around SendGrid (email) and Spryng (SMS). Tracks time path from mailing to studio. Sends 8M promo emails/year and 2M promo SMS/year"
     },
     {
       "id": "agency",
       "label": "Agency",
       "type": "service",
       "category": "external",
-      "description": "Handles Google/web ads, Facebook/Instagram postings (including copywriting)",
-      "position": {
-        "x": 1200,
-        "y": 150
-      }
+      "description": "Handles Google/web ads, Facebook/Instagram postings (including copywriting)"
     },
     {
       "id": "studio_voorhuis",
       "label": "Studio Voorhuis",
       "type": "service",
       "category": "external",
-      "description": "Designs posters, flyers, artwork; manages the website",
-      "position": {
-        "x": 1200,
-        "y": 300
-      }
+      "description": "Designs posters, flyers, artwork; manages the website"
     },
     {
       "id": "website",
       "label": "Website",
       "type": "software",
       "category": "client-facing",
-      "description": "Public-facing site providing information, gift card purchases, opening hours, vacancies",
-      "position": {
-        "x": 1200,
-        "y": 450
-      }
+      "description": "Public-facing site providing information, gift card purchases, opening hours, vacancies"
     },
     {
       "id": "planteq",
       "label": "Planteq (ICT provider)",
       "type": "service",
       "category": "external",
-      "description": "Ecosystem provider for core software systems",
-      "position": {
-        "x": 1200,
-        "y": 600
-      }
+      "description": "Ecosystem provider for core software systems"
     },
     {
       "id": "people_jack_ted_dinesh",
       "label": "Jack / Ted / Dinesh",
       "type": "people",
       "category": "internal",
-      "description": "Manage the CMS, providing e-mail markups, SMS text, promo pop-ups, campaign executions",
-      "position": {
-        "x": 800,
-        "y": 450
-      }
+      "description": "Manage the CMS, providing e-mail markups, SMS text, promo pop-ups, campaign executions"
     }
   ],
   "edges": [
@@ -222,9 +154,7 @@
       "target": "client_data_cloud",
       "label": "personal details, membership QR, history, balance, tanning advice",
       "direction": "both",
-      "metadata": {
-        "sync": "2x/day"
-      }
+      "metadata": { "sync": "2x/day" }
     },
     {
       "id": "e7",
@@ -232,9 +162,7 @@
       "target": "studio_data_hq",
       "label": "beds, bed status, lamp hours, product/pricing, staff present",
       "direction": "both",
-      "metadata": {
-        "sync": "1x/day (midnight)"
-      }
+      "metadata": { "sync": "1x/day (midnight)" }
     },
     {
       "id": "e8",

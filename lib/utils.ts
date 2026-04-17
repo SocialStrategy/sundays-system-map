@@ -17,6 +17,51 @@ export function layoutNodes(
   edges: EdgeData[],
   direction: 'TB' | 'LR' = 'LR'
 ): { reactFlowNodes: ReactFlowNode[]; reactFlowEdges: ReactFlowEdge[] } {
+  // Check if any node has pre‑computed position
+  const hasCustomPositions = nodes.some(node => node.position);
+  
+  if (hasCustomPositions) {
+    // Use custom positions for nodes that have them; fallback to dagre for others
+    const nodesWithPos: NodeData[] = [];
+    const nodesWithoutPos: NodeData[] = [];
+    
+    nodes.forEach(node => {
+      if (node.position) {
+        nodesWithPos.push(node);
+      } else {
+        nodesWithoutPos.push(node);
+      }
+    });
+    
+    // If all nodes have positions, skip dagre entirely
+    if (nodesWithoutPos.length === 0) {
+      const reactFlowNodes: ReactFlowNode[] = nodes.map(node => ({
+        id: node.id,
+        type: 'custom',
+        position: node.position!, // already checked
+        data: node,
+        style: { width: 200, height: 80 },
+      }));
+      
+      const reactFlowEdges: ReactFlowEdge[] = edges.map(edge => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        label: edge.label,
+        labelStyle: { fontSize: 12, fontWeight: 500 },
+        style: { stroke: '#94a3b8', strokeWidth: 2 },
+        markerEnd: 'url(#arrowhead)',
+      }));
+      
+      return { reactFlowNodes, reactFlowEdges };
+    }
+    
+    // Otherwise, we need to layout nodes without positions using dagre
+    // For simplicity, we still run dagre for all nodes, but override positions for those with custom positions
+    // This ensures edges are routed correctly relative to all nodes.
+  }
+  
+  // Default dagre layout (original behavior)
   const g = new dagre.graphlib.Graph();
   g.setGraph({ rankdir: direction, nodesep: 100, ranksep: 150 });
   g.setDefaultEdgeLabel(() => ({}));
@@ -35,10 +80,14 @@ export function layoutNodes(
 
   const reactFlowNodes: ReactFlowNode[] = nodes.map(node => {
     const dagreNode = g.node(node.id);
+    // If node has custom position, use it; otherwise use dagre layout
+    const position = node.position 
+      ? node.position 
+      : { x: dagreNode.x - dagreNode.width / 2, y: dagreNode.y - dagreNode.height / 2 };
     return {
       id: node.id,
       type: 'custom',
-      position: { x: dagreNode.x - dagreNode.width / 2, y: dagreNode.y - dagreNode.height / 2 },
+      position,
       data: node,
       style: { width: dagreNode.width, height: dagreNode.height },
     };

@@ -11,6 +11,7 @@ export interface NodeData {
   description?: string;
   metadata?: Record<string, any>;
   layer?: 'current' | 'proposed';
+  position?: { x: number; y: number };
 }
 
 export interface EdgeData {

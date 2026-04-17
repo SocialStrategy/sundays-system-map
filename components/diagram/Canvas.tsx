@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, MouseEvent } from 'react';
 import ReactFlow, {
   Controls,
   Background,
@@ -21,8 +21,9 @@ import ReactFlow, {
   BackgroundVariant,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { useStorage, useMutation, useOthers, useMyPresence, useStatus } from '@liveblocks/react';
+import { Presence } from '@/lib/liveblocks';
 import CustomNode from './CustomNode';
-import { useDiagramStore } from '@/lib/store';
 import { loadArchitectureData, layoutNodes } from '@/lib/utils';
 import { NodeData, NodeType } from '@/lib/types';
 
@@ -32,17 +33,32 @@ const nodeTypes = {
 
 export default function Canvas() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes] = useNodesState([]);
-  const [edges, setEdges] = useEdgesState([]);
   const { setViewport } = useReactFlow();
-  const layerFilter = useDiagramStore((state) => state.layerFilter);
-  const setStoreNodes = useDiagramStore((state) => state.setNodes);
-  const setStoreEdges = useDiagramStore((state) => state.setEdges);
-  const addStoreNode = useDiagramStore((state) => state.addNode);
-  const addStoreEdge = useDiagramStore((state) => state.addEdge);
+  const layerFilter = (useStorage((root) => root.layerFilter) ?? 'all') as 'all' | 'current' | 'proposed';
+  const nodes = (useStorage((root) => root.nodes) ?? []) as unknown as Node<NodeData>[];
+  const edges = (useStorage((root) => root.edges) ?? []) as unknown as Edge[];
+  const setNodesMutation = useMutation(({ storage }, newNodes: Node<NodeData>[]) => {
+    storage.set('nodes', newNodes as any);
+  }, []);
+  const setEdgesMutation = useMutation(({ storage }, newEdges: Edge[]) => {
+    storage.set('edges', newEdges as any);
+  }, []);
+  const addNodeMutation = useMutation(({ storage }, node: Node<NodeData>) => {
+    const nodes = storage.get('nodes') as any;
+    nodes.push(node as any);
+  }, []);
+  const addEdgeMutation = useMutation(({ storage }, edge: Edge) => {
+    const edges = storage.get('edges') as any;
+    edges.push(edge as any);
+  }, []);
+  const status = useStatus();
+  const [myPresence, updateMyPresence] = useMyPresence();
+  const others = useOthers();
 
   // Load initial data
+  const loadedRef = useRef(false);
   useEffect(() => {
+    if (status !== 'connected' || loadedRef.current) return;
     async function loadInitialData() {
       try {
         const data = await loadArchitectureData();
@@ -52,27 +68,18 @@ export default function Canvas() {
           layer: 'current' as const,
         }));
         const { reactFlowNodes, reactFlowEdges } = layoutNodes(nodesWithLayer, data.edges);
-        setNodes(reactFlowNodes);
-        setEdges(reactFlowEdges);
-        setStoreNodes(reactFlowNodes);
-        setStoreEdges(reactFlowEdges);
+        // Only set if storage is still empty (maybe check nodes length)
+        setNodesMutation(reactFlowNodes);
+        setEdgesMutation(reactFlowEdges);
         // Center viewport
         setViewport({ x: 0, y: 0, zoom: 0.8 });
+        loadedRef.current = true;
       } catch (error) {
         console.error('Failed to load architecture data:', error);
       }
     }
     loadInitialData();
-  }, [setNodes, setEdges, setStoreNodes, setStoreEdges, setViewport]);
-
-  // Sync nodes/edges to store on changes (debounced?)
-  useEffect(() => {
-    setStoreNodes(nodes);
-  }, [nodes, setStoreNodes]);
-
-  useEffect(() => {
-    setStoreEdges(edges);
-  }, [edges, setStoreEdges]);
+  }, [status, setNodesMutation, setEdgesMutation, setViewport]);
 
   // Filter nodes/edges by layer
   const filteredNodes = useMemo(() => {
@@ -90,25 +97,30 @@ export default function Canvas() {
 
   const onConnect: OnConnect = useCallback(
     (params) => {
-      setEdges((eds) => {
-        const newEdges = addEdge(params, eds);
-        const lastEdge = newEdges[newEdges.length - 1];
-        lastEdge.id = `edge_${Date.now()}`;
-        addStoreEdge(lastEdge);
-        return newEdges;
-      });
+      const newEdge = addEdge(params, edges);
+      // addEdge returns a new edges array with the new edge appended (without id)
+      // we need to add id to the last edge
+      const edgeWithId = { ...newEdge[newEdge.length - 1], id: `edge_${Date.now()}` };
+      const updatedEdges = [...edges, edgeWithId];
+      setEdgesMutation(updatedEdges);
     },
-    [setEdges, addStoreEdge]
+    [edges, setEdgesMutation]
   );
 
   const onNodesChange: OnNodesChange = useCallback(
-    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    [setNodes]
+    (changes) => {
+      const updatedNodes = applyNodeChanges(changes, nodes);
+      setNodesMutation(updatedNodes);
+    },
+    [nodes, setNodesMutation]
   );
 
   const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    [setEdges]
+    (changes) => {
+      const updatedEdges = applyEdgeChanges(changes, edges);
+      setEdgesMutation(updatedEdges);
+    },
+    [edges, setEdgesMutation]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -149,11 +161,23 @@ export default function Canvas() {
         },
       };
 
-      setNodes((nds) => nds.concat(newNode));
-      addStoreNode(newNode);
+      addNodeMutation(newNode);
     },
-    [setNodes, addStoreNode]
+    [addNodeMutation]
   );
+
+  // Presence: update cursor position on mouse move
+  const onPaneMouseMove = useCallback((event: React.MouseEvent) => {
+    if (!reactFlowWrapper.current) return;
+    const bounds = reactFlowWrapper.current.getBoundingClientRect();
+    const x = event.clientX - bounds.left;
+    const y = event.clientY - bounds.top;
+    updateMyPresence({ cursor: { x, y } });
+  }, [updateMyPresence]);
+
+  const onPaneMouseLeave = useCallback(() => {
+    updateMyPresence({ cursor: null });
+  }, [updateMyPresence]);
 
   return (
     <div className="relative flex-1" ref={reactFlowWrapper}>
@@ -165,6 +189,8 @@ export default function Canvas() {
         onConnect={onConnect}
         onDrop={onDrop}
         onDragOver={onDragOver}
+        onPaneMouseMove={onPaneMouseMove as any}
+        onPaneMouseLeave={onPaneMouseLeave}
         nodeTypes={nodeTypes}
         fitView
         className="bg-background-light dark:bg-background-dark"
@@ -188,6 +214,56 @@ export default function Canvas() {
           maskColor="rgba(255, 255, 255, 0.6)"
         />
       </ReactFlow>
+      {/* Other users' cursors */}
+      <div className="absolute inset-0 pointer-events-none z-10">
+        {others.map((other) => {
+          const presence = other.presence as Presence;
+          if (!presence?.cursor) return null;
+          const { x, y } = presence.cursor;
+          return (
+            <div
+              key={other.connectionId}
+              className="absolute w-4 h-4 rounded-full border-2 border-white shadow-lg"
+              style={{
+                left: x - 8,
+                top: y - 8,
+                backgroundColor: presence.color || '#FF7A3D',
+                transform: 'translate(-50%, -50%)',
+              }}
+            >
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                {presence.name || 'Anonymous'}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {/* Presence panel */}
+      <div className="absolute right-4 bottom-4 z-10 bg-card/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg dark:bg-card-dark/80">
+        <h4 className="font-ui font-semibold text-sm mb-2">Collaborators</h4>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-accent-primary flex items-center justify-center text-xs text-white">
+              {(myPresence as Presence).name?.charAt(0) || 'A'}
+            </div>
+            <span className="font-body text-sm">You</span>
+          </div>
+          {others.map((other) => {
+            const presence = other.presence as Presence;
+            return (
+              <div key={other.connectionId} className="flex items-center gap-2">
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-xs text-white"
+                  style={{ backgroundColor: presence.color || '#FF7A3D' }}
+                >
+                  {presence.name?.charAt(0) || '?'}
+                </div>
+                <span className="font-body text-sm">{presence.name || 'Anonymous'}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
       <div className="absolute left-4 top-4 z-10">
         <div className="rounded-2xl bg-card/80 p-4 backdrop-blur-sm dark:bg-card-dark/80">
           <h3 className="font-heading font-bold">Sunday's Studios</h3>

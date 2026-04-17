@@ -1,11 +1,13 @@
 'use client';
 
-import { useDiagramStore } from '@/lib/store';
+import { useStorage, useMutation } from '@liveblocks/react';
 import { clsx } from 'clsx';
 
 export default function LayerToggle() {
-  const layerFilter = useDiagramStore((state) => state.layerFilter);
-  const setLayerFilter = useDiagramStore((state) => state.setLayerFilter);
+  const layerFilter = (useStorage((root) => root.layerFilter) ?? 'all') as 'all' | 'current' | 'proposed';
+  const setLayerFilter = useMutation(({ storage }, filter: 'all' | 'current' | 'proposed') => {
+    storage.set('layerFilter', filter as any);
+  }, []);
 
   const buttons = [
     { value: 'all' as const, label: 'All', color: 'bg-slate-200 text-slate-800' },
