@@ -1,14 +1,13 @@
 'use client';
 
-import { useStorage, useMutation } from '@liveblocks/react';
 import { clsx } from 'clsx';
 
-export default function LayerToggle() {
-  const layerFilter = (useStorage((root) => root.layerFilter) ?? 'all') as 'all' | 'current' | 'proposed';
-  const setLayerFilter = useMutation(({ storage }, filter: 'all' | 'current' | 'proposed') => {
-    storage.set('layerFilter', filter as any);
-  }, []);
+interface LayerToggleProps {
+  value: 'all' | 'current' | 'proposed';
+  onChange: (filter: 'all' | 'current' | 'proposed') => void;
+}
 
+export default function LayerToggle({ value, onChange }: LayerToggleProps) {
   const buttons = [
     { value: 'all' as const, label: 'All', color: 'bg-slate-200 text-slate-800' },
     { value: 'current' as const, label: 'Current', color: 'bg-green-100 text-green-800' },
@@ -24,11 +23,11 @@ export default function LayerToggle() {
             key={btn.value}
             className={clsx(
               'rounded-xl px-4 py-2 font-ui text-sm font-medium transition-colors',
-              layerFilter === btn.value
+              value === btn.value
                 ? `${btn.color} shadow-inner`
                 : 'bg-transparent text-muted-foreground hover:bg-accent-primary/10'
             )}
-            onClick={() => setLayerFilter(btn.value)}
+            onClick={() => onChange(btn.value)}
           >
             {btn.label}
           </button>
