@@ -1,8 +1,10 @@
 'use client';
 
 import { useCallback } from 'react';
-import { Tldraw, Editor, createShapeId, createBindingId } from 'tldraw';
+import { Tldraw, Editor, createShapeId } from 'tldraw';
 import 'tldraw/tldraw.css';
+
+const TLDRAW_LICENSE = 'tldraw-2026-07-27/WyJlVjliaXFnaiIsWyIqIl0sMTYsIjIwMjYtMDctMjciXQ.lm29vrKBfOPP5bqV2HLJelMLJBSeLTyYXz85w7Tc5vv8YMfyAUD0JCINfmnx/c73iyIDrFYID0fF8JARbEkvgA';
 
 interface ArchNode {
   id: string;
@@ -172,11 +174,12 @@ function buildScene(editor: Editor, data: ArchData) {
 
 export default function Board() {
   const handleMount = useCallback((editor: Editor) => {
-    fetch('/architecture.json')
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    fetch(`${basePath}/architecture.json`)
       .then((r) => r.json())
       .then((data: ArchData) => buildScene(editor, data))
       .catch((err) => console.error('Failed to load architecture:', err));
   }, []);
 
-  return <Tldraw onMount={handleMount} />;
+  return <Tldraw licenseKey={TLDRAW_LICENSE} onMount={handleMount} />;
 }
